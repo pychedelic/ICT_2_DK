@@ -1,0 +1,103 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.graph_objects as go
+import plotly.express as px
+
+df = pd.read_csv("../input/novel-corona-virus-2019-dataset/covid_19_data.csv")
+df.info()
+df.rename(columns={'Country/Region':'Country'}, inplace=True)
+df.rename(columns={'Province/State':'States'}, inplace=True)
+df.rename(columns={'ObservationDate':'Date'}, inplace=True)
+df.head()
+
+#Earliest cases
+df.head()
+
+#latest cases
+df.tail()
+
+# Average cout of confirmed, death and recovered cases
+mean_confirmed = df['Confirmed'].mean()
+print("Average amount of confirmed cases are:",mean_confirmed)
+
+mean_deaths = df['Deaths'].mean()
+print("Average amount of death cases are:",mean_deaths)
+
+mean_recovered = df['Recovered'].mean()
+print("Average amount of recovered cases are:",mean_recovered)
+
+#View for Australia
+df.query('Country=="Australia"').groupby("Last Update")[['Confirmed', 'Deaths', 'Recovered']].sum().reset_index()
+
+#View for Queensland
+df.query('States=="Queensland"').groupby("Last Update")[['Confirmed', 'Deaths', 'Recovered']].sum().reset_index()
+
+#Highest number of confirmed, deaths, recovered cases as per country/region
+
+full_table = pd.read_csv("../input/novel-corona-virus-2019-dataset/covid_19_data.csv")
+full_latest = full_table[full_table['ObservationDate'] == max(full_table['ObservationDate'])].reset_index()
+full_latest_grouped = full_latest.groupby('Country/Region')['Confirmed', 'Deaths', 'Recovered'].sum().reset_index()
+temp_f = full_latest_grouped.sort_values(by='Confirmed', ascending=False)
+temp_f = temp_f.reset_index(drop=True)
+temp_f.style.background_gradient(cmap='Reds')
+
+#Comparing confirmed cases with respect to top 7 affected countries
+
+labels = 'US', 'Italy', 'Spain', 'China', 'Germany', 'France', 'Iran'
+sizes = [213372, 110574, 104118, 81555, 77872, 57749, 47593]
+explode = (0,0,0.1,0.1,0.1,0.3,0.4)  # only "explode" the first slice (i.e. 'US')
+
+fig1, ax1 = plt.subplots(figsize=(15,10))
+ax1.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%',
+        shadow=False, startangle=90)
+ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+plt.show()
+
+plot_1 = df['States'].value_counts().plot.barh(
+    figsize=(27, 100),
+    color='mediumvioletred',
+    fontsize=10
+)
+plot_1.set_title("Number of cases per State", fontsize=20)
+sns.despine(bottom=True, left=True)
+plt.show()
+
+plot_2 = df['Country'].value_counts().plot.barh(
+    figsize=(27, 100),
+    color='mediumvioletred',
+    fontsize=10
+)
+plot_2.set_title("Number of cases per province", fontsize=20)
+sns.despine(bottom=True, left=True)
+plt.show()
+
+bar = go.Figure()
+bar.add_trace(go.Bar(x=confirmed_cases['Date'], y=confirmed_cases['Confirmed'], name='Confirmed', marker_color='Black'))
+bar.add_trace(go.Bar(x=death_cases['Date'],y=death_cases['Deaths'], name='Deaths',marker_color='Blue'))
+bar.add_trace(go.Bar(x=recovered_cases['Date'], y=recovered_cases['Recovered'], name='Recovered', marker_color='Red'))
+
+bar.update_layout(title='Bar chart for confirmed, recovered and death cases (globally)',xaxis_tickfont_size=14,
+        yaxis=dict(title='Number of Cases',titlefont_size=16, tickfont_size=14,),
+    legend=dict(x=0,y=1.0,bgcolor='rgba(255, 255, 255, 0)',bordercolor='rgba(255, 255, 255, 0)'),
+    barmode='group',bargap=0.15,bargroupgap=0.1)
+
+bar.show()
+
+df_con = df_con[["States","Lat","Long","Country"]]
+df_temp = df.copy()
+df_latlong = pd.merge(df_temp, df_con, on=["Country", "States"])
+
+fig_map = px.density_mapbox(df_latlong,lat="Lat",lon="Long",hover_name="States",hover_data=["Confirmed","Deaths","Recovered"],animation_frame="Date",
+                        color_continuous_scale="Portland",radius=7,zoom=0,height=700)
+
+fig_map.update_layout(title='Confirmed, Deaths, Recovered cases globally (Time lapse)',
+                  font=dict(family="Courier New, monospace", size=18,color="#7f7f7f"))
+
+fig_map.update_layout(mapbox_style="open-street-map", mapbox_center_lon=0)
+
+fig_map.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+
+
+fig_map.show()
